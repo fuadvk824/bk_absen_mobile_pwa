@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "742694440844",
+    "project_id": "bkabsensi-a705a",
+    "storage_bucket": "bkabsensi-a705a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742694440844:android:be47182449fe9cc46090a9",
+        "android_client_info": {
+          "package_name": "com.example.bk_absen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDV_NFoDOFIFW93HA7k2Y6htFTkhumg7Fw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
