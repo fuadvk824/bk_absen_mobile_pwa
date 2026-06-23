@@ -122,6 +122,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     if (data?.isOff == true) {
       return "Hari ini libur";
     }
+     if (data?.hasShift == false) return "Tidak Ada Shift";
 
     final checkIn = data?.checkIn;
     final checkOut = data?.checkOut;

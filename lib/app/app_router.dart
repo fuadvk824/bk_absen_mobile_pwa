@@ -7,8 +7,8 @@ import '../features/auth/presentation/auth_login_screen.dart';
 import '../features/auth/presentation/update_password_screen.dart';
 import '../features/auth/provider/auth_provider.dart';
 
-import '../features/update/presentation/update_dialog.dart';
-import '../features/update/services/update_service.dart';
+// import '../features/update/presentation/update_dialog.dart';
+// import '../features/update/services/update_service.dart';
 
 class AppRouter extends ConsumerStatefulWidget {
   const AppRouter({super.key});
@@ -18,46 +18,46 @@ class AppRouter extends ConsumerStatefulWidget {
 }
 
 class _AppRouterState extends ConsumerState<AppRouter> {
-  final updateService = UpdateService();
+  // final updateService = UpdateService();
 
-  bool checkedUpdate = false;
+  // bool checkedUpdate = false;
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      checkUpdate();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   checkUpdate();
+    // });
   }
 
-  Future<void> checkUpdate() async {
-    if (checkedUpdate) return;
+  // Future<void> checkUpdate() async {
+  //   if (checkedUpdate) return;
 
-    checkedUpdate = true;
+  //   checkedUpdate = true;
 
-    try {
-      final latest = await updateService.getLatestVersion();
+  //   try {
+  //     final latest = await updateService.getLatestVersion();
 
-      final currentVersion = updateService.getCurrentVersion();
+  //     final currentVersion = updateService.getCurrentVersion();
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      if (currentVersion != latest.version) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => UpdateDialog(
-            currentVersion: currentVersion,
-            latestVersion: latest.version,
-            message: latest.message,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint("Update Error: $e");
-    }
-  }
+  //     if (currentVersion != latest.version) {
+  //       showDialog(
+  //         context: context,
+  //         barrierDismissible: false,
+  //         builder: (_) => UpdateDialog(
+  //           currentVersion: currentVersion,
+  //           latestVersion: latest.version,
+  //           message: latest.message,
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     debugPrint("Update Error: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

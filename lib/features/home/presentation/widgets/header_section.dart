@@ -35,7 +35,7 @@ class HeaderSection extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    "${user?.department ?? "-"} - STAFF1.0.0",
+                    "${user?.department ?? "-"} - STAFF",
                     style: const TextStyle(fontSize: 12),
                   ),
                 ],

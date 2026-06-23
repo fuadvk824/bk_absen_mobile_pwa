@@ -19,7 +19,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool isPreparing = false;
- 
+
   Future<void> _handleActionTap() async {
     final notifier = ref.read(attendanceProvider.notifier);
     final state = ref.read(attendanceProvider);
@@ -77,6 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     //tambahan
     final isOff = state.attendance?.isOff == true;
+    final hasShift = state.attendance?.hasShift == true;
     //tambahan
 
     final date = DateFormat(
@@ -116,7 +117,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // onTap: _handleActionTap,
 
                       //tambahan
-                      onTap: isOff ? null : _handleActionTap,
+                      // onTap: isOff ? null : _handleActionTap,
+                      onTap: (isOff || !hasShift) ? null : _handleActionTap,
                       //tambahan
                     ),
 
