@@ -78,7 +78,7 @@ class _AuthLoginScreenState extends ConsumerState<AuthLoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "🚴‍♀️ Test Drive",
+                    "Bisa Absen",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
