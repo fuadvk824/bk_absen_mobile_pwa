@@ -1,5 +1,6 @@
 import 'package:bk_absen/features/category/payroll.dart';
 import 'package:bk_absen/features/leave/presentation/leave_screen.dart';
+import 'package:bk_absen/features/letter/presentation/letter_screen.dart';
 import 'package:bk_absen/features/overtime/presentation/overtime_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -11,17 +12,12 @@ class MenuItem {
   final IconData icon;
   final Widget page;
 
-  const MenuItem({
-    required this.title,
-    required this.icon,
-    required this.page,
-  });
+  const MenuItem({required this.title, required this.icon, required this.page});
 }
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
 
-  /// DATA MENU
   static const List<MenuItem> menus = [
     MenuItem(
       title: "Lembur",
@@ -36,9 +32,13 @@ class Menu extends StatelessWidget {
     MenuItem(
       title: "Payroll",
       icon: LucideIcons.receipt,
-      page: Payroll(title: 'Payroll')
+      page: Payroll(title: 'Payroll'),
     ),
-  
+    MenuItem(
+      title: "SP",
+      icon: LucideIcons.mailWarning,
+      page: LetterScreen(title: 'SP'),
+    ),
   ];
 
   @override
@@ -50,20 +50,18 @@ class Menu extends StatelessWidget {
           children: [
             const SizedBox(height: 10),
 
-            /// TITLE
             const Text(
-              "Menu Lintune",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-              ),
+              "Kategori",
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
             ),
 
-            /// GRID MENU
             Expanded(
               child: GridView.builder(
                 itemCount: menus.length,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
                   mainAxisSpacing: 16,
@@ -78,15 +76,12 @@ class Menu extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => menu.page,
-                        ),
+                        MaterialPageRoute(builder: (_) => menu.page),
                       );
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        /// ICON BOX
                         Container(
                           height: 60,
                           width: 60,
@@ -94,16 +89,11 @@ class Menu extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
-                            menu.icon,
-                            color: Colors.white,
-                            size: 28,
-                          ),
+                          child: Icon(menu.icon, color: AppColors.light, size: 28),
                         ),
 
                         const SizedBox(height: 8),
 
-                        /// TITLE
                         Text(
                           menu.title,
                           textAlign: TextAlign.center,

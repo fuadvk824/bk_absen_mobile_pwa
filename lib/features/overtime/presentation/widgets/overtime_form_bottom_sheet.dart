@@ -1,5 +1,4 @@
-import 'package:cherry_toast/cherry_toast.dart';
-import 'package:cherry_toast/resources/arrays.dart';
+import 'package:bk_absen/utils/toast_helper.dart';
 import 'package:flutter/material.dart';
 
 class OvertimeFormBottomSheet extends StatefulWidget {
@@ -30,12 +29,18 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
   @override
   void initState() {
     super.initState();
+
     reasonController.addListener(() {
       setState(() {});
     });
   }
 
-  /// VALIDASI WAKTU
+  @override
+  void dispose() {
+    reasonController.dispose();
+    super.dispose();
+  }
+
   bool get isTimeValid {
     if (startTime == null || endTime == null) return false;
 
@@ -45,7 +50,6 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
     return end > start;
   }
 
-  /// VALIDASI FORM
   bool get isFormValid {
     return selectedDate != null &&
         startTime != null &&
@@ -54,50 +58,110 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
         reasonController.text.trim().isNotEmpty;
   }
 
-  /// SUBMIT DATA
+  String get formattedDate {
+    final date = selectedDate!;
+
+    return '${date.year}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String formatTime(TimeOfDay? time) {
+    if (time == null) return '';
+
+    return '${time.hour.toString().padLeft(2, '0')}:'
+        '${time.minute.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _submit() async {
-    String date =
-        "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+    final timeFrom = formatTime(startTime);
+    final timeTo = formatTime(endTime);
 
-    String timeFrom =
-        "${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}";
+    try {
+      setState(() => isSubmitting = true);
 
-    String timeTo =
-        "${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}";
+      await widget.onSubmit(
+        date: formattedDate,
+        timeFrom: timeFrom,
+        timeTo: timeTo,
+        reason: reasonController.text.trim(),
+      );
 
-    await widget.onSubmit(
-      date: date,
-      timeFrom: timeFrom,
-      timeTo: timeTo,
-      reason: reasonController.text,
+      if (!mounted) return;
+
+      ToastHelper.success(
+        context,
+        title: 'Berhasil',
+        message: 'Pengajuan lembur berhasil dikirim',
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ToastHelper.error(
+        context,
+        title: 'Gagal',
+        message: 'Gagal mengajukan lembur',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isSubmitting = false);
+      }
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2100),
+      initialDate: selectedDate ?? DateTime.now(),
     );
+
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
 
-  /// CUSTOM NOTIF (tanpa snackbar)
-  void _showSuccess(String message) {
-    CherryToast.success(
-      title: const Text("Berhasil"),
-      description: const Text("Pengajuan lembur dikirim"),
-      animationType: AnimationType.fromTop,
-      animationDuration: const Duration(milliseconds: 700),
-    ).show(context);
+  Future<void> _pickStartTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: startTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        startTime = picked;
+      });
+    }
   }
 
-  void _showError(String message) {
-    CherryToast.error(
-      title: Text(message),
-      animationType: AnimationType.fromTop,
-      animationDuration: const Duration(milliseconds: 700),
-    ).show(context);
-  }
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: endTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
 
-  String? formatTime(TimeOfDay? time) {
-    if (time == null) return null;
-
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-
-    return "$hour:$minute";
+    if (picked != null) {
+      setState(() {
+        endTime = picked;
+      });
+    }
   }
 
   @override
@@ -109,34 +173,21 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 60,
       ),
-
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Pengajuan Lembur",
+            'Pengajuan Lembur',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
-
-          /// TANGGAL
-          const Text("Tanggal", style: TextStyle(fontWeight: FontWeight.w500)),
+          const Text('Tanggal', style: TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
-          InkWell(
-            onTap: () async {
-              DateTime? picked = await showDatePicker(
-                context: context,
-                firstDate: DateTime(2024),
-                lastDate: DateTime(2100),
-                initialDate: DateTime.now(),
-              );
 
-              if (picked != null) {
-                setState(() => selectedDate = picked);
-              }
-            },
+          InkWell(
+            onTap: _pickDate,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
@@ -147,9 +198,7 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    selectedDate == null
-                        ? "Pilih tanggal"
-                        : selectedDate.toString().split(" ")[0],
+                    selectedDate == null ? 'Pilih tanggal' : formattedDate,
                     style: TextStyle(
                       color: selectedDate == null ? Colors.grey : Colors.black,
                     ),
@@ -162,7 +211,6 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
 
           const SizedBox(height: 16),
 
-          /// JAM (GRID BIAR RAPI)
           Row(
             children: [
               Expanded(
@@ -170,72 +218,36 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Jam Mulai",
+                      'Jam Mulai',
                       style: TextStyle(fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () async {
-                        TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.now(),
-                          builder: (context, child) {
-                            return MediaQuery(
-                              data: MediaQuery.of(
-                                context,
-                              ).copyWith(alwaysUse24HourFormat: true),
-                              child: child!,
-                            );
-                          },
-                        );
 
-                        if (picked != null) {
-                          setState(() => startTime = picked);
-                        }
-                      },
-                      child: _timeField(
-                        context,
-                        formatTime(startTime),
-                        "Mulai",
-                      ),
+                    const SizedBox(height: 6),
+
+                    InkWell(
+                      onTap: _pickStartTime,
+                      child: _timeField(formatTime(startTime), 'Mulai'),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Jam Selesai",
+                      'Jam Selesai',
                       style: TextStyle(fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () async {
-                        TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.now(),
-                          builder: (context, child) {
-                            return MediaQuery(
-                              data: MediaQuery.of(
-                                context,
-                              ).copyWith(alwaysUse24HourFormat: true),
-                              child: child!,
-                            );
-                          },
-                        );
 
-                        if (picked != null) {
-                          setState(() => endTime = picked);
-                        }
-                      },
-                      child: _timeField(
-                        context,
-                        formatTime(endTime),
-                        "Selesai",
-                      ),
+                    const SizedBox(height: 6),
+
+                    InkWell(
+                      onTap: _pickEndTime,
+                      child: _timeField(formatTime(endTime), 'Selesai'),
                     ),
                   ],
                 ),
@@ -243,25 +255,23 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
             ],
           ),
 
-          /// ERROR VALIDASI
           if (!isTimeValid && startTime != null && endTime != null)
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
-                "Jam selesai harus lebih dari jam mulai",
+                'Jam selesai harus lebih dari jam mulai',
                 style: TextStyle(color: Colors.red, fontSize: 12),
               ),
             ),
 
           const SizedBox(height: 16),
-
-          /// ALASAN
-          const Text("Alasan", style: TextStyle(fontWeight: FontWeight.w500)),
+          const Text('Alasan', style: TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
+
           TextField(
             controller: reasonController,
             decoration: InputDecoration(
-              hintText: "Masukkan alasan lembur...",
+              hintText: 'Masukkan alasan lembur...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -275,7 +285,6 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
 
           const SizedBox(height: 24),
 
-          /// BUTTON
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -285,30 +294,14 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: (!isFormValid || isSubmitting)
-                  ? null
-                  : () async {
-                      setState(() => isSubmitting = true);
-
-                      try {
-                        await _submit();
-                        _showSuccess("Pengajuan berhasil");
-                        if (mounted) Navigator.pop(context);
-                      } catch (e) {
-                        _showError("Gagal mengajukan");
-                      }
-
-                      if (mounted) {
-                        setState(() => isSubmitting = false);
-                      }
-                    },
+              onPressed: (!isFormValid || isSubmitting) ? null : _submit,
               child: isSubmitting
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text("Ajukan"),
+                  : const Text('Ajukan'),
             ),
           ),
         ],
@@ -316,7 +309,9 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
     );
   }
 
-  Widget _timeField(BuildContext context, String? value, String hint) {
+  Widget _timeField(String value, String hint) {
+    final hasValue = value.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
@@ -327,8 +322,8 @@ class _OvertimeFormBottomSheetState extends State<OvertimeFormBottomSheet> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            value ?? hint,
-            style: TextStyle(color: value == null ? Colors.grey : Colors.black),
+            hasValue ? value : hint,
+            style: TextStyle(color: hasValue ? Colors.black : Colors.grey),
           ),
           const Icon(Icons.access_time, size: 18),
         ],

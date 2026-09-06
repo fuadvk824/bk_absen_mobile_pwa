@@ -1,18 +1,25 @@
+ 
 import 'dart:typed_data';
 
+import 'package:bk_absen/core/storage/cache_service.dart';
 import 'package:bk_absen/features/home/data/attendance_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bk_absen/model/user_model.dart';
 import 'package:bk_absen/model/check_in_out_model.dart';
 
-final attendanceRepositoryProvider = Provider((ref) => AttendanceRepository());
+final attendanceRepositoryProvider =
+    Provider((ref) => AttendanceRepository());
 
 class AttendanceState {
   final UserModel? user;
   final CheckInOutModel? attendance;
   final bool isLoading;
 
-  AttendanceState({this.user, this.attendance, this.isLoading = false});
+  AttendanceState({
+    this.user,
+    this.attendance,
+    this.isLoading = false,
+  });
 
   AttendanceState copyWith({
     UserModel? user,
@@ -29,8 +36,10 @@ class AttendanceState {
 
 final attendanceProvider =
     StateNotifierProvider<AttendanceNotifier, AttendanceState>(
-      (ref) => AttendanceNotifier(ref.read(attendanceRepositoryProvider)),
-    );
+  (ref) => AttendanceNotifier(
+    ref.read(attendanceRepositoryProvider),
+  ),
+);
 
 class AttendanceNotifier extends StateNotifier<AttendanceState> {
   final AttendanceRepository repo;
@@ -40,14 +49,37 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(
+      isLoading: true,
+    );
 
     final user = await repo.getUser();
     final attendance = await repo.getToday();
 
     state = state.copyWith(
-      user: user,
+      user: user ?? state.user,
       attendance: attendance,
+      isLoading: false,
+    );
+  }
+
+
+  void updateAttendanceLocal(
+    CheckInOutModel attendance,
+  ) {
+    state = state.copyWith(
+      attendance: attendance,
+    );
+  }
+
+  Future<void> clearOfflineAttendance() async {
+    await repo.offlineRepo.clear();
+
+    await CacheService.delete(
+      "attendance_today",
+    );
+
+    state = state.copyWith(
       isLoading: false,
     );
   }
@@ -59,23 +91,114 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     required double lng,
     required double distance,
     required String locationStatus,
-
     String? lateReason,
     Uint8List? lateProofBytes,
   }) async {
-    await repo.checkIn(
-      employeeId: employeeId,
-      imageBytes: imageBytes,
-      lat: lat,
-      lng: lng,
-      distance: distance,
-      locationStatus: locationStatus,
+    try {
 
-      lateReason: lateReason,
-      lateProofBytes: lateProofBytes,
-    );
+      await repo.checkIn(
+        employeeId: employeeId,
+        imageBytes: imageBytes,
+        lat: lat,
+        lng: lng,
+        distance: distance,
+        locationStatus: locationStatus,
+        lateReason: lateReason,
+        lateProofBytes: lateProofBytes,
+      );
 
-    await load();
+      final now = DateTime.now();
+      String two(int n) => n.toString().padLeft(2, '0');
+
+      final today =
+          "${now.year.toString().padLeft(4, '0')}-"
+          "${two(now.month)}-"
+          "${two(now.day)}";
+
+      final checkInTime =
+          "${two(now.hour)}:"
+          "${two(now.minute)}:"
+          "${two(now.second)}";
+
+      final current = state.attendance;
+
+      final attendance = CheckInOutModel(
+        tanggal: today,
+        checkIn: checkInTime,
+        checkOut: null,
+        totalWaktu: current?.totalWaktu,
+        isOff: current?.isOff ?? false,
+        hasShift: current?.hasShift ?? true,
+        limitLate: current?.limitLate,
+      );
+
+      await CacheService.write(
+        "attendance_today",
+        {
+          "tanggal": attendance.tanggal,
+          "check_in": attendance.checkIn,
+          "check_out": attendance.checkOut,
+          "total_waktu": attendance.totalWaktu,
+          "is_off": attendance.isOff,
+          "has_shift": attendance.hasShift,
+          "limit_late": attendance.limitLate,
+        },
+      );
+
+      state = state.copyWith(attendance: attendance);
+    } catch (e) {
+
+      await repo.saveOfflineCheckIn(
+        employeeId: employeeId,
+        imageBytes: imageBytes,
+        lat: lat,
+        lng: lng,
+        distance: distance,
+        locationStatus: locationStatus,
+        lateReason: lateReason,
+        lateProofBytes: lateProofBytes,
+      );
+
+      final now = DateTime.now();
+      String two(int n) => n.toString().padLeft(2, '0');
+
+      final today =
+          "${now.year.toString().padLeft(4, '0')}-"
+          "${two(now.month)}-"
+          "${two(now.day)}";
+
+      final checkInTime =
+          "${two(now.hour)}:"
+          "${two(now.minute)}:"
+          "${two(now.second)}";
+
+      final current = state.attendance;
+
+      final attendance = CheckInOutModel(
+        tanggal: today,
+        checkIn: checkInTime,
+        checkOut: null,
+        totalWaktu: null,
+        isOff: current?.isOff ?? false,
+        hasShift: current?.hasShift ?? true,
+        limitLate: current?.limitLate,
+      );
+
+      await CacheService.write(
+        "attendance_today",
+        {
+          "tanggal": attendance.tanggal,
+          "check_in": attendance.checkIn,
+          "check_out": attendance.checkOut,
+          "total_waktu": attendance.totalWaktu,
+          "is_off": attendance.isOff,
+          "has_shift": attendance.hasShift,
+          "limit_late": attendance.limitLate,
+        },
+      );
+
+      state = state.copyWith(attendance: attendance);
+    }
   }
 
   Future<void> checkOut({
@@ -88,26 +211,180 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     String? earlyReason,
   }) async {
     if (isDoneToday()) {
-      throw Exception("Sudah checkout hari ini");
+      throw Exception(
+        "Sudah checkout hari ini",
+      );
     }
-    await repo.checkOut(
-      employeeId: employeeId,
-      imageBytes: imageBytes,
-      lat: lat,
-      lng: lng,
-      distance: distance,
-      locationStatus: locationStatus,
-      earlyReason: earlyReason,
-    );
 
-    await load(); // refresh global state
+    try {
+      await repo.checkOut(
+        employeeId: employeeId,
+        imageBytes: imageBytes,
+        lat: lat,
+        lng: lng,
+        distance: distance,
+        locationStatus: locationStatus,
+        earlyReason: earlyReason,
+      );
+
+      final now = DateTime.now();
+      String two(int n) => n.toString().padLeft(2, '0');
+
+      final today =
+          "${now.year.toString().padLeft(4, '0')}-"
+          "${two(now.month)}-"
+          "${two(now.day)}";
+
+      final checkoutTime =
+          "${two(now.hour)}:"
+          "${two(now.minute)}:"
+          "${two(now.second)}";
+
+      CheckInOutModel? current = state.attendance;
+
+      if (current == null) {
+        final cache = CacheService.read(
+          "attendance_today",
+        );
+
+        if (cache != null) {
+          current = CheckInOutModel.fromJson(
+            Map<String, dynamic>.from(cache),
+          );
+        }
+      }
+
+      if (current != null) {
+        final currentTanggal = current.tanggal.toString().split(' ').first;
+
+        if (currentTanggal != today) {
+          current = null;
+        }
+      }
+
+      final attendance = CheckInOutModel(
+        tanggal: current?.tanggal ?? today,
+        checkIn: current?.checkIn,
+        checkOut: checkoutTime,
+        totalWaktu: current?.totalWaktu,
+        isOff: current?.isOff ?? false,
+        hasShift: current?.hasShift ?? true,
+        limitLate: current?.limitLate,
+      );
+
+      await CacheService.write(
+        "attendance_today",
+        {
+          "tanggal": attendance.tanggal,
+          "check_in": attendance.checkIn,
+          "check_out": attendance.checkOut,
+          "total_waktu": attendance.totalWaktu,
+          "is_off": attendance.isOff,
+          "has_shift": attendance.hasShift,
+          "limit_late": attendance.limitLate,
+        },
+      );
+
+      state = state.copyWith(
+        attendance: attendance,
+      );
+    } catch (e) {
+
+      await repo.saveOfflineCheckOut(
+        employeeId: employeeId,
+        imageBytes: imageBytes,
+        lat: lat,
+        lng: lng,
+        distance: distance,
+        locationStatus: locationStatus,
+        earlyReason: earlyReason,
+      );
+
+      final now = DateTime.now();
+      String two(int n) => n.toString().padLeft(2, '0');
+
+      final today =
+          "${now.year.toString().padLeft(4, '0')}-"
+          "${two(now.month)}-"
+          "${two(now.day)}";
+
+      final checkoutTime =
+          "${two(now.hour)}:"
+          "${two(now.minute)}:"
+          "${two(now.second)}";
+
+      CheckInOutModel? current = state.attendance;
+
+      if (current == null) {
+        final cache = CacheService.read(
+          "attendance_today",
+        );
+
+        if (cache != null) {
+          current = CheckInOutModel.fromJson(
+            Map<String, dynamic>.from(cache),
+          );
+        }
+      }
+
+      if (current != null) {
+        final currentTanggal = current.tanggal.toString().split(' ').first;
+
+        if (currentTanggal != today) {
+          current = null;
+        }
+      }
+
+      final attendance = CheckInOutModel(
+        tanggal: current?.tanggal ?? today,
+        checkIn: current?.checkIn,
+        checkOut: checkoutTime,
+        totalWaktu: current?.totalWaktu,
+        isOff: current?.isOff ?? false,
+        hasShift: current?.hasShift ?? true,
+        limitLate: current?.limitLate,
+      );
+
+      await CacheService.write(
+        "attendance_today",
+        {
+          "tanggal": attendance.tanggal,
+          "check_in": attendance.checkIn,
+          "check_out": attendance.checkOut,
+          "total_waktu": attendance.totalWaktu,
+          "is_off": attendance.isOff,
+          "has_shift": attendance.hasShift,
+          "limit_late": attendance.limitLate,
+        },
+      );
+
+      state = state.copyWith(
+        attendance: attendance,
+      );
+    }
   }
+
 
   bool isDoneToday() {
     final data = state.attendance;
 
-    final checkIn = data?.checkIn;
-    final checkOut = data?.checkOut;
+    if (data == null) {
+      return false;
+    }
+
+    final now = DateTime.now();
+
+    final today =
+        "${now.year.toString().padLeft(4, '0')}-"
+        "${now.month.toString().padLeft(2, '0')}-"
+        "${now.day.toString().padLeft(2, '0')}";
+
+    if (data.tanggal != today) {
+      return false;
+    }
+
+    final checkIn = data.checkIn;
+    final checkOut = data.checkOut;
 
     return checkIn != null &&
         checkIn.isNotEmpty &&
@@ -122,17 +399,18 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     if (data?.isOff == true) {
       return "Hari ini libur";
     }
-     if (data?.hasShift == false) return "Tidak Ada Shift";
+
+    if (data?.hasShift == false) {
+      return "Tidak Ada Shift";
+    }
 
     final checkIn = data?.checkIn;
     final checkOut = data?.checkOut;
 
-    // belum checkin
     if (checkIn == null || checkIn.isEmpty) {
       return user?.checkInTime ?? "Tidak ada shift";
     }
 
-    // sudah checkin, belum checkout
     if (checkOut == null || checkOut.isEmpty) {
       return user?.checkOutTime ?? "Tidak ada shift";
     }
@@ -143,26 +421,45 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
   String getButton() {
     final data = state.attendance;
 
-    //tambahan
-    if (data?.isOff == true) {
+    if (data == null) {
+      return "Check In";
+    }
+
+    final now = DateTime.now();
+
+    final today =
+        "${now.year.toString().padLeft(4, '0')}-"
+        "${now.month.toString().padLeft(2, '0')}-"
+        "${now.day.toString().padLeft(2, '0')}";
+
+    if (data.tanggal != today) {
+      return "Check In";
+    }
+
+    if (data.isOff == true) {
       return "Libur";
     }
-    //tambahan
 
-    if (data?.checkIn == null || data!.checkIn!.isEmpty) {
+    if (data.checkIn == null || data.checkIn!.isEmpty) {
       return "Check In";
-    } else if (data.checkOut == null || data.checkOut!.isEmpty) {
-      return "Check Out";
-    } else {
-      return "Done";
     }
+
+    if (data.checkOut == null || data.checkOut!.isEmpty) {
+      return "Check Out";
+    }
+
+    return "Done";
   }
 
   bool isLate() {
     final data = state.attendance;
-    if (data?.limitLate == null) return false;
+
+    if (data?.limitLate == null) {
+      return false;
+    }
 
     final now = DateTime.now();
+
     final parts = data!.limitLate!.split(":");
 
     final limit = DateTime(
@@ -175,11 +472,14 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     );
 
     return now.isAfter(limit);
-  } //tambahan
+  }
 
   bool isBeforeCheckoutTime() {
     final user = state.user;
-    if (user?.checkOutTime == null) return false;
+
+    if (user?.checkOutTime == null) {
+      return false;
+    }
 
     final now = DateTime.now();
     final parts = user!.checkOutTime!.split(":");
@@ -196,3 +496,4 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     return now.isBefore(checkoutTime);
   }
 }
+

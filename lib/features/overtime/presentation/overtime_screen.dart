@@ -1,6 +1,7 @@
 import 'package:bk_absen/features/overtime/presentation/widgets/overtime_form_bottom_sheet.dart';
 import 'package:bk_absen/features/overtime/presentation/widgets/overtime_item.dart';
 import 'package:bk_absen/features/overtime/provider/overtime_provider.dart';
+import 'package:bk_absen/model/overtime_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,11 +16,7 @@ class OvertimeScreen extends ConsumerStatefulWidget {
 }
 
 class _OvertimeScreenState extends ConsumerState<OvertimeScreen> {
-  final TextEditingController reasonController = TextEditingController();
-
-  DateTime? selectedDate;
-  TimeOfDay? startTime;
-  TimeOfDay? endTime;
+  String selectedStatus = 'all';
 
   void _showOvertimeForm() {
     showModalBottomSheet(
@@ -51,13 +48,28 @@ class _OvertimeScreenState extends ConsumerState<OvertimeScreen> {
     );
   }
 
+  List<OvertimeModel> _filteredData(List<OvertimeModel> data) {
+    if (selectedStatus == 'all') {
+      return data;
+    }
+
+    return data
+        .where(
+          (item) => item.status.toLowerCase() == selectedStatus.toLowerCase(),
+        )
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(overtimeProvider);
     final notifier = ref.read(overtimeProvider.notifier);
 
+    final filteredData = _filteredData(state.data);
+
     return Scaffold(
       backgroundColor: AppColors.background,
+
       appBar: AppBar(
         centerTitle: true,
         title: Text(
@@ -77,24 +89,97 @@ class _OvertimeScreenState extends ConsumerState<OvertimeScreen> {
           ),
         ],
       ),
+
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : state.data.isEmpty
-          ? const Center(child: Text("Belum ada data lembur"))
-          : RefreshIndicator(
-              onRefresh: () async {
-                await notifier.load();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: ListView.builder(
-                  itemCount: state.data.length,
-                  itemBuilder: (context, index) {
-                    return OvertimeItem(overtime: state.data[index]);
-                  },
+          : Column(
+              children: [
+                // FILTER STATUS
+                _buildStatusFilter(),
+
+                // LIST
+                Expanded(
+                  child: filteredData.isEmpty
+                      ? Center(
+                          child: Text(
+                            selectedStatus == 'all'
+                                ? 'Belum ada data lembur'
+                                : 'Belum ada lembur dengan status ${_statusLabel(selectedStatus)}',
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            await notifier.load();
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(top: 5, bottom: 10),
+                            itemCount: filteredData.length,
+                            itemBuilder: (context, index) {
+                              return OvertimeItem(
+                                overtime: filteredData[index],
+                              );
+                            },
+                          ),
+                        ),
                 ),
-              ),
+              ],
             ),
     );
+  }
+
+  Widget _buildStatusFilter() {
+    const statuses = ['all', 'approved', 'pending', 'rejected'];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: statuses.map((status) {
+            final isSelected = selectedStatus == status;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(_statusLabel(status)),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() {
+                    selectedStatus = status;
+                  });
+                },
+                selectedColor: AppColors.primary,
+                backgroundColor: Colors.white,
+                checkmarkColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+                side: BorderSide(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'approved':
+        return 'Approved';
+      case 'pending':
+        return 'Pending';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return 'Semua';
+    }
   }
 }

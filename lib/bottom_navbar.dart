@@ -2,10 +2,11 @@ import 'dart:ui';
 import 'package:bk_absen/features/auth/presentation/auth_login_screen.dart';
 import 'package:bk_absen/features/auth/provider/auth_provider.dart';
 import 'package:bk_absen/features/calendar/presentation/calendar_screen.dart';
-import 'package:bk_absen/features/category/koperasi.dart';
+// import 'package:bk_absen/features/category/koperasi.dart';
 import 'package:bk_absen/features/category/menu.dart';
 import 'package:bk_absen/features/category/profile.dart';
 import 'package:bk_absen/features/home/presentation/home_screen.dart';
+import 'package:bk_absen/offline/presentation/offline_queue_screen.dart';
 
 import 'package:bk_absen/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class _BottomNavbarState extends ConsumerState<BottomNavbar> {
     {"icon": LucideIcons.house, "label": "Home"},
     {"icon": LucideIcons.calendarRange, "label": "Schedule"},
     {"icon": LucideIcons.layoutGrid, "label": "Category"},
-    {"icon": LucideIcons.landmark, "label": "Co-op"},
+    {"icon": LucideIcons.clockAlert, "label": "Queue"},
     {"icon": LucideIcons.user, "label": "Profile"},
   ];
 
@@ -42,7 +43,7 @@ class _BottomNavbarState extends ConsumerState<BottomNavbar> {
       HomeScreen(),
       CalendarScreen(),
       Menu(),
-      Koperasi(),
+      OfflineQueueScreen(),
       Profile(),
     ];
   }
@@ -152,7 +153,7 @@ class _BottomNavbarState extends ConsumerState<BottomNavbar> {
               color: isActive ? Colors.white : Colors.white,
               size: 24,
             ),
-            
+
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,

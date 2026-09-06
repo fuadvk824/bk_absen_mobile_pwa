@@ -46,7 +46,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// ================= MAIN CONTENT =================
   Widget _buildContent(BuildContext context, List<CalendarItem> items) {
     final bottomSafe = MediaQuery.of(context).padding.bottom;
 
@@ -122,7 +121,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.light,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TableCalendar(
@@ -281,7 +280,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         color: bgColor,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withValues(alpha: .15), blurRadius: 8),
+          BoxShadow(color: AppColors.tertiary.withValues(alpha: .15), blurRadius: 8),
         ],
       ),
       child: IntrinsicHeight(
@@ -315,18 +314,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
             const SizedBox(width: 12),
 
-            /// DETAIL
             Expanded(
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      // _timeBox(item.checkIn, "CheckIn", plColor),
-                      // _timeBox(item.checkOut, "CheckOut", plColor),
-                      // _timeBox(item.totalWaktu, (future ? "Shift" : "Total"), plColor),
 
-                      //tambahan
                       _timeBox(
                         isLibur ? "-" : item.checkIn,
                         "CheckIn",
@@ -337,11 +331,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         "CheckOut",
                         plColor,
                       ),
-                      // _timeBox(
-                      //   isLibur ? "Libur" : item.totalWaktu,
-                      //   "Shift",
-                      //   plColor,
-                      // ),
+                     
                       _timeBox(value, label, plColor),
                       //tambahan
                     ],
@@ -364,16 +354,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       color: today ? plColor : Color(item.warna),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    // child: Text(
-                    //   item.status,
-                    //   style: TextStyle(color: bgColor, fontSize: 10),
-                    // ),
-                    //tambahan
+                   
                     child: Text(
                       isLibur ? "Libur" : item.status,
                       style: TextStyle(color: bgColor, fontSize: 10),
                     ),
-                    //tambahan
+                  
                   ),
                 ],
               ),

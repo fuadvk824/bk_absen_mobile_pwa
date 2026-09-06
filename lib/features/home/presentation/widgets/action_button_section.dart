@@ -141,12 +141,10 @@ class _ActionButtonSectionState extends State<ActionButtonSection>
           _buildOuterCircle(200),
           _buildOuterCircle(180),
 
-          ///  MAIN BUTTON
           Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(100),
-              // onTap: widget.isLoading ? null : _handleTap,
               onTap: _handleTap,
               child: _buildMainButton(),
             ),

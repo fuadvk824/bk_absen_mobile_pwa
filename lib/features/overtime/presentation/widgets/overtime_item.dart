@@ -8,7 +8,7 @@ class OvertimeItem extends StatelessWidget {
   const OvertimeItem({super.key, required this.overtime});
 
   String _getDayShort(int weekday) {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const days = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
     return days[weekday - 1];
   }
 
@@ -18,14 +18,14 @@ class OvertimeItem extends StatelessWidget {
       "Feb",
       "Mar",
       "Apr",
-      "May",
+      "Mei",
       "Jun",
       "Jul",
-      "Aug",
+      "Ags",
       "Sep",
-      "Oct",
+      "Okt",
       "Nov",
-      "Dec",
+      "Des",
     ];
     return months[month - 1];
   }
@@ -103,7 +103,7 @@ class OvertimeItem extends StatelessWidget {
                               ),
                             ),
                             const Text(
-                              "CheckIn Time",
+                              "CheckIn",
                               style: TextStyle(fontSize: 10),
                             ),
                           ],
@@ -119,7 +119,7 @@ class OvertimeItem extends StatelessWidget {
                               ),
                             ),
                             const Text(
-                              "CheckOut Time",
+                              "CheckOut",
                               style: TextStyle(fontSize: 10),
                             ),
                           ],

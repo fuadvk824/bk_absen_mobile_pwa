@@ -1,24 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:bk_absen/model/leave_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
+import 'package:bk_absen/utils/toast_helper.dart';
+import 'package:bk_absen/features/leave/presentation/widgets/leave_pdf.dart';
 
 class LeaveItemWidget extends StatelessWidget {
   final LeaveModel leave;
-  final Function(String url) onOpenFile;
-  final Widget Function(String? url) filePreviewBuilder;
 
-  const LeaveItemWidget({
-    super.key,
-    required this.leave,
-    required this.onOpenFile,
-    required this.filePreviewBuilder,
-  });
+  const LeaveItemWidget({super.key, required this.leave});
+
+  String _getDayShort(int weekday) {
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+    return days[weekday - 1];
+  }
+
+  String _getMonthShort(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Ags',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    return months[month - 1];
+  }
+
+  Color _getStatusColor() {
+    return Color(leave.warna);
+  }
+
+  Future<void> _openFile(BuildContext context) async {
+    final fileUrl = leave.file;
+
+    if (fileUrl == null || fileUrl.trim().isEmpty) {
+      ToastHelper.warning(
+        context,
+        message: 'File untuk pengajuan cuti ini tidak tersedia',
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LeavePdf(fileUrl: fileUrl, title: leave.leaveName),
+      ),
+    );
+  }
+
+  DateTime? _parseStartDate() {
+    try {
+      return DateTime.parse(leave.startDate);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasFile = leave.file != null && leave.file!.trim().isNotEmpty;
+
+    final startDate = _parseStartDate();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.light,
         borderRadius: BorderRadius.circular(15),
@@ -26,89 +80,220 @@ class LeaveItemWidget extends StatelessWidget {
           BoxShadow(color: Colors.grey.withValues(alpha: .15), blurRadius: 8),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                if (leave.file != null && leave.file!.isNotEmpty) {
-                  onOpenFile(leave.file!);
-                }
-              },
-              child: Container(
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+        childrenPadding: EdgeInsets.zero,
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+
+        title: IntrinsicHeight(
+          child: Row(
+            children: [
+               
+              Container(
                 width: 60,
-                height: 80,
+                height: 90,
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(child: filePreviewBuilder(leave.file)),
-              ),
-            ),
-
-            const SizedBox(width: 15),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _dateColumn(leave.startDate, "Start"),
-                      _dateColumn(leave.endDate, "End"),
-                      _statusColumn(leave),
-                    ],
-                  ),
-                  const Divider(),
-                  Column(
-                    children: [
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (startDate != null) ...[
                       Text(
-                        leave.leaveName,
+                        _getDayShort(startDate.weekday),
                         style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+
+                      const SizedBox(height: 2),
+
+                      Text(
+                        startDate.day.toString(),
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+
+                      const SizedBox(height: 2),
+
+                      Text(
+                        _getMonthShort(startDate.month),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ] else
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 15),
+            
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                       
+                        Column(
+                          children: [
+                            Text(
+                              leave.startDate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const Text('Start', style: TextStyle(fontSize: 10)),
+                          ],
+                        ),
+
+                        Column(
+                          children: [
+                            Text(
+                              leave.endDate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const Text('End', style: TextStyle(fontSize: 10)),
+                          ],
+                        ),
+
+                        Column(
+                          children: [
+                            Text(
+                              leave.status,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _getStatusColor(),
+                              ),
+                            ),
+                            const Text(
+                              'Status',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    const Divider(),
+
+                    Center(
+                      child: Text(
+                        leave.leaveName,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),
                       ),
-                      Text(
-                        leave.reason ?? "-",
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _dateColumn(String date, String label) {
-    return Column(
-      children: [
-        Text(date, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(fontSize: 10)),
-      ],
-    );
-  }
-
-  Widget _statusColumn(LeaveModel leave) {
-    return Column(
-      children: [
-        Text(
-          leave.status,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(leave.warna),
+            ],
           ),
         ),
-        const Text("Status", style: TextStyle(fontSize: 10)),
-      ],
+
+        children: [
+          const Divider(),
+
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+               
+                const Text(
+                  'Reason:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  leave.reason ?? '-',
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'File:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 5),
+
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _openFile(context),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: hasFile
+                          ? AppColors.primary.withValues(alpha: .08)
+                          : Colors.grey.withValues(alpha: .08),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          hasFile
+                              ? Icons.picture_as_pdf
+                              : Icons.insert_drive_file_outlined,
+                          size: 18,
+                          color: hasFile ? AppColors.primary : Colors.grey,
+                        ),
+
+                        const SizedBox(width: 6),
+
+                        Text(
+                          hasFile ? 'Lihat File' : 'File tidak tersedia',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: hasFile ? AppColors.primary : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

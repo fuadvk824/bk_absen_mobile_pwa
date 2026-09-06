@@ -18,7 +18,8 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
   int _cameraIndex = 0;
 
   Timer? _timer;
-  String _timeText = "";
+  // String _timeText = "";
+  DateTime _currentTime = DateTime.now();
 
   bool _isFlashOn = false;
 
@@ -37,11 +38,18 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
     });
   }
 
+  // void _updateTime() {
+  //   final now = DateTime.now();
+
+  //   setState(() {
+  //     _timeText = DateFormat('dd MMM yyyy • HH:mm:ss').format(now);
+  //   });
+  // }
   void _updateTime() {
-    final now = DateTime.now();
+    if (!mounted) return;
 
     setState(() {
-      _timeText = DateFormat('dd MMM yyyy • HH:mm:ss').format(now);
+      _currentTime = DateTime.now();
     });
   }
 
@@ -143,7 +151,8 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
                     children: [
                       /// ===== JAM BESAR =====
                       Text(
-                        DateFormat('HH:mm').format(DateTime.now()),
+                        // DateFormat('HH:mm').format(DateTime.now()),
+                         DateFormat('HH:mm').format(_currentTime),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: MediaQuery.of(context).size.width * 0.19,
@@ -187,9 +196,10 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                DateFormat(
-                                  'dd MMM yyyy',
-                                ).format(DateTime.now()),
+                                // DateFormat(
+                                //   'dd MMM yyyy',
+                                // ).format(DateTime.now()),
+                                DateFormat('dd MMM yyyy').format(_currentTime),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize:
@@ -205,7 +215,8 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
                               ),
 
                               Text(
-                                DateFormat('EEEE').format(DateTime.now()),
+                                // DateFormat('EEEE').format(DateTime.now()),
+                                DateFormat('EEEE').format(_currentTime),
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.95),
                                   fontSize:
