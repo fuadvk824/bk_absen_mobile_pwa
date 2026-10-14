@@ -1,15 +1,32 @@
 import 'package:bk_absen/core/network/dio_client.dart';
 import 'package:bk_absen/model/overtime_model.dart';
+import 'package:bk_absen/model/overtime_period.dart';
 import 'package:dio/dio.dart';
 
 class OvertimeRepository {
-  Future<List<OvertimeModel>> fetchOvertime() async {
+  Future<OvertimeResponse> fetchOvertime({required int period}) async {
     try {
-      final response = await DioClient.dio.get('/myovertime');
-      final data = response.data['data'] as List;
-      return data.map((e) => OvertimeModel.fromJson(e)).toList();
+      final response = await DioClient.dio.get(
+        '/myovertime',
+        queryParameters: {'period': period},
+      );
+
+      final responseData = response.data;
+
+      final data = (responseData['data'] as List)
+          .map((e) => OvertimeModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+
+      final periodData = responseData['period'];
+
+      final totalOvertimeMinutes = periodData?['total_overtime_minutes'] ?? 0;
+
+      return OvertimeResponse(
+        data: data,
+        totalOvertimeMinutes: totalOvertimeMinutes,
+      );
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? "Failed get overtime");
+      throw Exception(e.response?.data['message'] ?? 'Failed get overtime');
     }
   }
 
@@ -20,12 +37,16 @@ class OvertimeRepository {
     required String reason,
   }) async {
     try {
-      final response = await DioClient.dio.post('/overtime', data: {
-        "date": date,
-        "time_from": timeFrom,
-        "time_to": timeTo,
-        "reason": reason,
-      });
+      final response = await DioClient.dio.post(
+        '/overtime',
+        data: {
+          "date": date,
+          "time_from": timeFrom,
+          "time_to": timeTo,
+          "reason": reason,
+        },
+      );
+
       return response.data['message'] ?? "Berhasil";
     } on DioException catch (e) {
       throw e.response?.data['message'] ?? "Failed submit overtime";

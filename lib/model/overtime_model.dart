@@ -6,6 +6,7 @@ class OvertimeModel {
   final String reason;
   final String status;
   final int warna;
+  final int totalMinutes;
 
   OvertimeModel({
     required this.id,
@@ -15,6 +16,7 @@ class OvertimeModel {
     required this.reason,
     required this.status,
     required this.warna,
+    required this.totalMinutes,
   });
 
   factory OvertimeModel.fromJson(Map<String, dynamic> json) {
@@ -25,9 +27,8 @@ class OvertimeModel {
       timeTo: json['time_to'] ?? '',
       reason: json['reason'] ?? '',
       status: json['status'] ?? 'pending',
-
-      // penting: backend kamu kirim 0xffffc107 (hex int)
       warna: _parseColor(json['warna']),
+      totalMinutes: json['total_minutes'] ?? 0,
     );
   }
 
@@ -37,11 +38,33 @@ class OvertimeModel {
     if (value is int) return value;
 
     if (value is String) {
-      // kalau backend kirim "0xffffc107"
       return int.tryParse(value) ?? 0xff9e9e9e;
     }
 
     return 0xff9e9e9e;
+  }
+
+  Duration get totalDuration {
+    return Duration(minutes: totalMinutes);
+  }
+
+  String get totalDurationText {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+
+    if (hours == 0 && minutes == 0) {
+      return '0jam';
+    }
+
+    if (minutes == 0) { 
+      return '${hours}jam';
+    }
+
+    if (hours == 0) {
+      return '${minutes}menit';
+    }
+
+    return '${hours}j ${minutes}m';
   }
 
   Map<String, dynamic> toJson() {
@@ -53,6 +76,7 @@ class OvertimeModel {
       "reason": reason,
       "status": status,
       "warna": warna,
+      "total_minutes": totalMinutes,
     };
   }
 }

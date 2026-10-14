@@ -102,10 +102,7 @@ class OvertimeItem extends StatelessWidget {
                                 color: AppColors.primary,
                               ),
                             ),
-                            const Text(
-                              "CheckIn",
-                              style: TextStyle(fontSize: 10),
-                            ),
+                            const Text("Start", style: TextStyle(fontSize: 10)),
                           ],
                         ),
                         Column(
@@ -118,40 +115,59 @@ class OvertimeItem extends StatelessWidget {
                                 color: AppColors.primary,
                               ),
                             ),
-                            const Text(
-                              "CheckOut",
-                              style: TextStyle(fontSize: 10),
-                            ),
+                            const Text("End", style: TextStyle(fontSize: 10)),
                           ],
                         ),
                         Column(
                           children: [
                             Text(
-                              overtime.status,
+                              overtime.totalDurationText,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(overtime.warna),
+                                color: AppColors.primary,
                               ),
                             ),
-                            const Text(
-                              "Status",
-                              style: TextStyle(fontSize: 10),
-                            ),
+                            const Text("Total", style: TextStyle(fontSize: 10)),
                           ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     const Divider(),
-                    Center(
-                      child: Text(
-                        overtime.date,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          overtime.date,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+
+                        const SizedBox(width: 12),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(overtime.warna),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            overtime.status,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.dark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -167,7 +183,7 @@ class OvertimeItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Reason:",
+                  "Alasan:",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 3),

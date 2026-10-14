@@ -10,14 +10,20 @@ class SyncManager {
 
   Future<void> sync() async {
     if (_syncing) return;
+
     _syncing = true;
 
     try {
       final service = SyncService();
-      await service.syncPending();
-      await ref.read(attendanceProvider.notifier).load();
+      final synced = await service.syncPending();
+
+      if (synced) {
+        await ref.read(attendanceProvider.notifier).load();
+      }
     } finally {
       _syncing = false;
     }
   }
+
+ 
 }

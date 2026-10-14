@@ -4,8 +4,6 @@ import 'package:bk_absen/utils/app_colors.dart';
 class Koperasi extends StatelessWidget {
   const Koperasi({super.key});
 
- 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

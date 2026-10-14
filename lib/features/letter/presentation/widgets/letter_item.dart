@@ -1,22 +1,53 @@
-import 'package:bk_absen/features/letter/presentation/widgets/letter_pdf.dart';
-import 'package:bk_absen/utils/toast_helper.dart';
+
 import 'package:flutter/material.dart';
 import 'package:bk_absen/model/letter_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
+import 'package:bk_absen/utils/toast_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LetterItem extends StatefulWidget {
   final LetterModel letter;
-  final Future<void> Function()? onRead;
+  final Future<String?> Function()? onRead;
 
-  const LetterItem({super.key, required this.letter, this.onRead});
+  const LetterItem({
+    super.key,
+    required this.letter,
+    this.onRead,
+  });
 
   @override
   State<LetterItem> createState() => _LetterItemState();
 }
 
 class _LetterItemState extends State<LetterItem> {
+  bool _isDownloading = false;
+  late bool _isRead;
+
+  @override
+  void initState() {
+    super.initState();
+    _isRead = widget.letter.isRead;
+  }
+
+  @override
+  void didUpdateWidget(covariant LetterItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.letter.isRead != widget.letter.isRead) {
+      _isRead = widget.letter.isRead;
+    }
+  }
+
   String _getDayShort(int weekday) {
-    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const days = [
+      'Sen',
+      'Sel',
+      'Rab',
+      'Kam',
+      'Jum',
+      'Sab',
+      'Min',
+    ];
 
     return days[weekday - 1];
   }
@@ -44,14 +75,19 @@ class _LetterItemState extends State<LetterItem> {
     switch (jenisSurat.toLowerCase()) {
       case 'sp1':
         return Colors.orange;
+
       case 'sp2':
         return Colors.deepOrange;
+
       case 'sp3':
         return Colors.red;
+
       case 'probation':
         return Colors.blue;
+
       case 'paklaring':
         return Colors.green;
+
       default:
         return AppColors.primary;
     }
@@ -61,48 +97,105 @@ class _LetterItemState extends State<LetterItem> {
     switch (jenisSurat.toLowerCase()) {
       case 'sp1':
         return 'Surat Peringatan 1';
+
       case 'sp2':
         return 'Surat Peringatan 2';
+
       case 'sp3':
         return 'Surat Peringatan 3';
+
       case 'probation':
         return 'Surat Probation';
+
       case 'paklaring':
         return 'Surat Paklaring';
+
       default:
         return jenisSurat;
     }
   }
 
-  Future<void> _openPdf(BuildContext context) async {
-    final pdfUrl = widget.letter.pdfUrl;
+  Future<void> _downloadPdf() async {
+    if (_isDownloading) return;
 
-    if (pdfUrl == null || pdfUrl.isEmpty) {
-      ToastHelper.warning(context, message: 'PDF tidak tersedia');
+    final oldPdfUrl = widget.letter.pdfUrl;
+
+    if (oldPdfUrl == null || oldPdfUrl.trim().isEmpty) {
+      ToastHelper.warning(
+        context,
+        message: 'PDF tidak tersedia',
+      );
       return;
     }
 
-    // Tandai sudah dibaca
-    if (!widget.letter.isRead) {
-      await widget.onRead?.call();
+    setState(() {
+      _isDownloading = true;
+    });
+
+    try {
+      String downloadUrl = oldPdfUrl.trim();
+
+      // Jika surat belum dibaca, panggil API untuk
+      // menandai surat dibaca dan mendapatkan URL PDF terbaru.
+      if (!_isRead) {
+        final newPdfUrl = await widget.onRead?.call();
+
+        if (newPdfUrl == null || newPdfUrl.trim().isEmpty) {
+          throw Exception(
+            'Gagal mendapatkan PDF surat yang sudah dibaca',
+          );
+        }
+
+        downloadUrl = newPdfUrl.trim();
+      }
+
+      // Validasi URL PDF.
+      final uri = Uri.tryParse(downloadUrl);
+
+      if (uri == null ||
+          !uri.hasAuthority ||
+          (uri.scheme != 'https' && uri.scheme != 'http')) {
+        throw Exception('URL PDF tidak valid');
+      }
+
+      // Buka PDF di tab browser baru.
+      final launched = await launchUrl(
+        uri,
+        webOnlyWindowName: '_blank',
+      );
+
+      if (!launched) {
+        throw Exception('Gagal membuka PDF');
+      }
+
+      if (!mounted) return;
+
+      // Perbarui status lokal setelah API berhasil
+      // dan browser menerima permintaan membuka PDF.
+      if (!_isRead) {
+        setState(() {
+          _isRead = true;
+        });
+      }
+
+      ToastHelper.success(
+        context,
+        message: 'PDF berhasil dibuka',
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ToastHelper.error(
+        context,
+        message: 'Gagal membuka PDF. Silakan coba lagi.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
     }
-
-    if (!context.mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'PDF Surat',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          body: LetterPdf(url: pdfUrl),
-        ),
-      ),
-    );
   }
 
   @override
@@ -115,15 +208,23 @@ class _LetterItemState extends State<LetterItem> {
       date = null;
     }
 
-    final letterColor = _getLetterColor(widget.letter.jenisSurat);
+    final letterColor = _getLetterColor(
+      widget.letter.jenisSurat,
+    );
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: AppColors.light,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withValues(alpha: .15), blurRadius: 8),
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: .15),
+            blurRadius: 8,
+          ),
         ],
       ),
       child: Padding(
@@ -131,6 +232,7 @@ class _LetterItemState extends State<LetterItem> {
         child: IntrinsicHeight(
           child: Row(
             children: [
+              // Tanggal surat.
               Container(
                 width: 60,
                 decoration: BoxDecoration(
@@ -177,6 +279,7 @@ class _LetterItemState extends State<LetterItem> {
 
               const SizedBox(width: 15),
 
+              // Informasi surat.
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,10 +289,13 @@ class _LetterItemState extends State<LetterItem> {
                       children: [
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _getLetterTitle(widget.letter.jenisSurat),
+                                _getLetterTitle(
+                                  widget.letter.jenisSurat,
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -203,7 +309,9 @@ class _LetterItemState extends State<LetterItem> {
                                 widget.letter.nomorSurat,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 10),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                ),
                               ),
                             ],
                           ),
@@ -212,29 +320,32 @@ class _LetterItemState extends State<LetterItem> {
                         const SizedBox(width: 8),
 
                         Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(
+                            right: 8,
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.end,
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    widget.letter.isRead
+                                    _isRead
                                         ? Icons.mark_email_read
                                         : Icons.mark_email_unread,
                                     size: 16,
-                                    color: widget.letter.isRead
+                                    color: _isRead
                                         ? Colors.green
                                         : Colors.orange,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    widget.letter.isRead ? 'Dibaca' : 'Baru',
+                                    _isRead ? 'Dibaca' : 'Baru',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: widget.letter.isRead
+                                      color: _isRead
                                           ? Colors.green
                                           : Colors.orange,
                                     ),
@@ -244,7 +355,9 @@ class _LetterItemState extends State<LetterItem> {
                               const SizedBox(height: 3),
                               const Text(
                                 'Status',
-                                style: TextStyle(fontSize: 10),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                ),
                               ),
                             ],
                           ),
@@ -253,28 +366,49 @@ class _LetterItemState extends State<LetterItem> {
                     ),
 
                     const SizedBox(height: 4),
+
                     const Divider(),
+
                     const SizedBox(height: 2),
 
+                    // Tombol buka PDF.
                     if (widget.letter.pdfUrl != null &&
                         widget.letter.pdfUrl!.isNotEmpty)
                       SizedBox(
                         height: 35,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(8),
-                          onTap: () => _openPdf(context),
+                          onTap: _isDownloading
+                              ? null
+                              : _downloadPdf,
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.picture_as_pdf,
-                                size: 17,
-                                color: AppColors.primary,
-                              ),
+                              if (_isDownloading)
+                                const SizedBox(
+                                  width: 17,
+                                  height: 17,
+                                  child:
+                                      CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary,
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.download_outlined,
+                                  size: 17,
+                                  color: AppColors.primary,
+                                ),
+
                               const SizedBox(width: 6),
+
                               Text(
-                                'Lihat PDF',
-                                style: TextStyle(
+                                _isDownloading
+                                    ? 'Membuka PDF...'
+                                    : 'Lihat & Download',
+                                style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primary,
@@ -288,7 +422,8 @@ class _LetterItemState extends State<LetterItem> {
                       const SizedBox(
                         height: 30,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.picture_as_pdf_outlined,

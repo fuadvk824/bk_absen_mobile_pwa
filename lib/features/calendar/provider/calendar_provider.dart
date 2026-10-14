@@ -1,28 +1,29 @@
-import 'package:bk_absen/model/calendar_item_model.dart';
+import 'package:bk_absen/model/calendar_legend_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:bk_absen/features/calendar/data/calendar_repository.dart';
 
-///  REPOSITORY PROVIDER
-final calendarRepositoryProvider =
-    Provider((ref) => CalendarRepository());
+final calendarRepositoryProvider = Provider(
+  (ref) => CalendarRepository(),
+);
 
-///  MAIN PROVIDER
-final calendarProvider =
-    AsyncNotifierProvider<CalendarNotifier, List<CalendarItem>>(
+final calendarProvider = AsyncNotifierProvider<
+    CalendarNotifier,
+    CalendarResponse>(
   CalendarNotifier.new,
 );
 
-class CalendarNotifier extends AsyncNotifier<List<CalendarItem>> {
+class CalendarNotifier extends AsyncNotifier<CalendarResponse> {
   late final repo = ref.read(calendarRepositoryProvider);
 
   DateTime focusedDay = DateTime.now();
 
   @override
-  Future<List<CalendarItem>> build() async {
+  Future<CalendarResponse> build() async {
     return fetch();
   }
 
-  Future<List<CalendarItem>> fetch() async {
+  Future<CalendarResponse> fetch() async {
     return await repo.fetch(
       year: focusedDay.year,
       month: focusedDay.month,
@@ -31,6 +32,17 @@ class CalendarNotifier extends AsyncNotifier<List<CalendarItem>> {
 
   void changeMonth(DateTime date) {
     focusedDay = date;
-    ref.invalidateSelf(); // auto reload
+    ref.invalidateSelf();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+
+    try {
+      final data = await fetch();
+      state = AsyncData(data);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
   }
 }

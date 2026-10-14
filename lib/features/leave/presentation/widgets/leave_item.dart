@@ -1,38 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:bk_absen/model/leave_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
 import 'package:bk_absen/utils/toast_helper.dart';
-import 'package:bk_absen/features/leave/presentation/widgets/leave_pdf.dart';
 
 class LeaveItemWidget extends StatelessWidget {
   final LeaveModel leave;
 
   const LeaveItemWidget({super.key, required this.leave});
-
-  String _getDayShort(int weekday) {
-    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-
-    return days[weekday - 1];
-  }
-
-  String _getMonthShort(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Ags',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
-
-    return months[month - 1];
-  }
 
   Color _getStatusColor() {
     return Color(leave.warna);
@@ -49,27 +25,54 @@ class LeaveItemWidget extends StatelessWidget {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LeavePdf(fileUrl: fileUrl, title: leave.leaveName),
-      ),
-    );
+    try {
+      final uri = Uri.tryParse(fileUrl);
+
+      if (uri == null || !uri.hasScheme) {
+        throw Exception('URL file tidak valid');
+      }
+
+      /*
+       * Flutter Web / PWA:
+       *
+       * Langsung buka file menggunakan browser,
+       * sama seperti tombol download pada LeavePdf.
+       *
+       * Tidak menggunakan:
+       * - File()
+       * - path_provider
+       * - open_filex
+       * - SfPdfViewer
+       */
+
+      final launched = await launchUrl(uri, webOnlyWindowName: '_blank');
+
+      if (!launched) {
+        throw Exception('Browser gagal membuka file');
+      }
+    } catch (e) {
+      debugPrint('LEAVE FILE ERROR: $e');
+
+      if (!context.mounted) return;
+
+      ToastHelper.error(context, message: 'Gagal membuka file');
+    }
   }
 
-  DateTime? _parseStartDate() {
+  int _getLeaveDuration() {
     try {
-      return DateTime.parse(leave.startDate);
+      final start = DateTime.parse(leave.startDate);
+      final end = DateTime.parse(leave.endDate);
+
+      return end.difference(start).inDays + 1;
     } catch (_) {
-      return null;
+      return 0;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final hasFile = leave.file != null && leave.file!.trim().isNotEmpty;
-
-    final startDate = _parseStartDate();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -92,7 +95,6 @@ class LeaveItemWidget extends StatelessWidget {
         title: IntrinsicHeight(
           child: Row(
             children: [
-               
               Container(
                 width: 60,
                 height: 90,
@@ -103,56 +105,45 @@ class LeaveItemWidget extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (startDate != null) ...[
-                      Text(
-                        _getDayShort(startDate.weekday),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        startDate.day.toString(),
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        _getMonthShort(startDate.month),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ] else
-                      const Icon(
-                        Icons.calendar_today,
+                    const Text(
+                      'Cuti',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
-                        size: 30,
                       ),
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    Text(
+                      _getLeaveDuration().toString(),
+                      style: const TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    const Text(
+                      'Hari',
+                      style: TextStyle(fontSize: 11, color: Colors.white),
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(width: 15),
-            
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                       
                         Column(
                           children: [
                             Text(
@@ -230,9 +221,8 @@ class LeaveItemWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               
                 const Text(
-                  'Reason:',
+                  'Alasan:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
@@ -254,7 +244,7 @@ class LeaveItemWidget extends StatelessWidget {
 
                 InkWell(
                   borderRadius: BorderRadius.circular(8),
-                  onTap: () => _openFile(context),
+                  onTap: hasFile ? () => _openFile(context) : null,
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 10),

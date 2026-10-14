@@ -1,47 +1,16 @@
-import 'package:bk_absen/features/auth/provider/auth_provider.dart';
-// import 'package:bk_absen/features/home/provider/attendance_provider.dart';
+import 'package:bk_absen/utils/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../models/offline_attendance_model.dart';
 
-class OfflineQueueScreen extends ConsumerWidget {
+class OfflineQueueScreen extends StatelessWidget {
   const OfflineQueueScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authProvider);
-
-    return auth.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) => const Scaffold(body: Center(child: Text("Empty"))),
-      data: (user) {
-        if (user == null || user.employeeId != 86) {
-          return const Scaffold(
-            body: Center(
-              child: Text(
-                "Empty",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
-          );
-        }
-
-        return const _OfflineQueueContent();
-      },
-    );
-  }
-}
-
-class _OfflineQueueContent extends ConsumerWidget {
-  const _OfflineQueueContent();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final Box<OfflineAttendanceModel> box = Hive.box<OfflineAttendanceModel>(
-      "offline_attendance",
+      'offline_attendance',
     );
 
     return Scaffold(
@@ -54,11 +23,11 @@ class _OfflineQueueContent extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Queue",
+              'Queue',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             Text(
-              "Attendance Synchronization",
+              'Attendance Synchronization',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -67,48 +36,6 @@ class _OfflineQueueContent extends ConsumerWidget {
             ),
           ],
         ),
-        // actions: [
-        //   IconButton(
-        //     tooltip: "Hapus semua",
-        //     icon: const Icon(Icons.delete_outline),
-        //     onPressed: () async {
-        //       if (box.isEmpty) return;
-
-        //       final confirmed = await showDialog<bool>(
-        //         context: context,
-        //         builder: (context) {
-        //           return AlertDialog(
-        //             title: const Text("Hapus semua data?"),
-        //             content: const Text(
-        //               "Semua data attendance offline akan dihapus "
-        //               "dan tidak dapat dikembalikan.",
-        //             ),
-        //             actions: [
-        //               TextButton(
-        //                 onPressed: () => Navigator.pop(context, false),
-        //                 child: const Text("Batal"),
-        //               ),
-        //               FilledButton(
-        //                 style: FilledButton.styleFrom(
-        //                   backgroundColor: Colors.red,
-        //                 ),
-        //                 onPressed: () => Navigator.pop(context, true),
-        //                 child: const Text("Hapus"),
-        //               ),
-        //             ],
-        //           );
-        //         },
-        //       );
-
-        //       if (confirmed == true && context.mounted) {
-        //         await ref
-        //             .read(attendanceProvider.notifier)
-        //             .clearOfflineAttendance();
-        //       }
-        //     },
-        //   ),
-        //   const SizedBox(width: 8),
-        // ],
       ),
       body: ValueListenableBuilder<Box<OfflineAttendanceModel>>(
         valueListenable: box.listenable(),
@@ -122,12 +49,14 @@ class _OfflineQueueContent extends ConsumerWidget {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                 
-
                 if (items.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: _EmptyState(),
+                    child: Padding(
+                      // Beri ruang agar pusat visual tidak tertutup bottom navbar.
+                      padding: const EdgeInsets.only(bottom: 100),
+                      child: const _EmptyState(),
+                    ),
                   )
                 else
                   SliverPadding(
@@ -196,13 +125,15 @@ class _OfflineAttendanceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Icon(
-                    item.type.toLowerCase().contains("in")
+                    item.type.toLowerCase().contains('in')
                         ? Icons.login_rounded
                         : Icons.logout_rounded,
                     color: const Color(0xFF016E0A),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +147,7 @@ class _OfflineAttendanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        "#${index + 1} • Emp ${item.employeeId}",
+                        '#${index + 1} • ${item.employeeId}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -225,6 +156,7 @@ class _OfflineAttendanceCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -245,9 +177,11 @@ class _OfflineAttendanceCard extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
+
                       const SizedBox(width: 6),
+
                       Text(
-                        synced ? "Synced" : "Pending",
+                        synced ? 'Synced' : 'Pending',
                         style: TextStyle(
                           color: statusColor,
                           fontSize: 11,
@@ -272,15 +206,15 @@ class _OfflineAttendanceCard extends StatelessWidget {
                 Expanded(
                   child: _InfoItem(
                     icon: Icons.flag_outlined,
-                    label: "Status",
+                    label: 'Status',
                     value: item.status,
                   ),
                 ),
                 Expanded(
                   child: _InfoItem(
                     icon: Icons.sync_problem_outlined,
-                    label: "Retry",
-                    value: "${item.retryCount}x",
+                    label: 'Retry',
+                    value: '${item.retryCount}x',
                   ),
                 ),
               ],
@@ -293,14 +227,14 @@ class _OfflineAttendanceCard extends StatelessWidget {
                 Expanded(
                   child: _InfoItem(
                     icon: Icons.location_on_outlined,
-                    label: "Distance",
-                    value: "${item.distance}",
+                    label: 'Distance',
+                    value: '${item.distance}',
                   ),
                 ),
                 Expanded(
                   child: _InfoItem(
                     icon: Icons.access_time_outlined,
-                    label: "Created",
+                    label: 'Created',
                     value: _formatDate(item.createdAt),
                   ),
                 ),
@@ -314,11 +248,14 @@ class _OfflineAttendanceCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final String day = date.day.toString().padLeft(2, '0');
+
     final String month = date.month.toString().padLeft(2, '0');
+
     final String hour = date.hour.toString().padLeft(2, '0');
+
     final String minute = date.minute.toString().padLeft(2, '0');
 
-    return "$day/$month/${date.year} $hour:$minute";
+    return '$day/$month/${date.year} $hour:$minute';
   }
 }
 
@@ -339,7 +276,9 @@ class _InfoItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: Colors.grey.shade600),
+
         const SizedBox(width: 8),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +291,9 @@ class _InfoItem extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+
               const SizedBox(height: 2),
+
               Text(
                 value,
                 maxLines: 1,
@@ -391,19 +332,24 @@ class _EmptyState extends StatelessWidget {
               child: const Icon(
                 Icons.cloud_done_outlined,
                 size: 44,
-                color: Color(0xFF016E0A),
+                 color: AppColors.primary,
               ),
             ),
+
             const SizedBox(height: 20),
+
             const Text(
-              "Queue Kosong",
+              'Queue Kosong',
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
             ),
+
             const SizedBox(height: 8),
+
             Text(
-              "Tidak ada antrian data\n"
-              "untuk disinkronkan.",
+              'Tidak ada antrian data untuk disinkronkan',
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
                 height: 1.5,

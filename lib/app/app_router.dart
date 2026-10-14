@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bottom_navbar.dart';
-
 import '../features/auth/presentation/auth_login_screen.dart';
-// import '../features/auth/presentation/update_password_screen.dart';
 import '../features/auth/provider/auth_provider.dart';
 
 class AppRouter extends ConsumerStatefulWidget {
@@ -25,8 +23,7 @@ class _AppRouterState extends ConsumerState<AppRouter> {
     final authState = ref.watch(authProvider);
 
     return authState.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
 
       error: (_, _) => const AuthLoginScreen(),
 
@@ -34,10 +31,6 @@ class _AppRouterState extends ConsumerState<AppRouter> {
         if (user == null) {
           return const AuthLoginScreen();
         }
-
-        // if (user.keyStatus == 'new') {
-        //   return const ForceChangePasswordScreen();
-        // }
 
         return const BottomNavbar();
       },

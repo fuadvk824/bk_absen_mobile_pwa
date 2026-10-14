@@ -1,6 +1,7 @@
 import 'package:bk_absen/features/category/payroll.dart';
 import 'package:bk_absen/features/leave/presentation/leave_screen.dart';
 import 'package:bk_absen/features/letter/presentation/letter_screen.dart';
+import 'package:bk_absen/features/offday/presentation/offday_screen.dart';
 import 'package:bk_absen/features/overtime/presentation/overtime_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -26,18 +27,24 @@ class Menu extends StatelessWidget {
     ),
     MenuItem(
       title: "Cuti",
-      icon: LucideIcons.luggage,
+      icon: LucideIcons.calendarX,
       page: LeaveScreen(title: 'Cuti'),
     ),
     MenuItem(
-      title: "Payroll",
-      icon: LucideIcons.receipt,
-      page: Payroll(title: 'Payroll'),
+      title: "Ganti Jadwal",
+      icon: LucideIcons.calendarSync,
+      page: OffdayScreen(title: 'Ganti Jadwal'),
     ),
     MenuItem(
       title: "SP",
       icon: LucideIcons.mailWarning,
       page: LetterScreen(title: 'SP'),
+    ),
+
+    MenuItem(
+      title: "Payroll",
+      icon: LucideIcons.receipt,
+      page: Payroll(title: 'Payroll'),
     ),
   ];
 
@@ -51,7 +58,7 @@ class Menu extends StatelessWidget {
             const SizedBox(height: 10),
 
             const Text(
-              "Kategori",
+              "Category",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
             ),
 
@@ -89,7 +96,7 @@ class Menu extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(menu.icon, color: AppColors.light, size: 28),
+                          child: Icon(menu.icon, color: Colors.white, size: 28),
                         ),
 
                         const SizedBox(height: 8),

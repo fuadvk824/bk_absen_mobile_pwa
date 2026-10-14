@@ -1,14 +1,19 @@
-import 'package:bk_absen/features/auth/provider/auth_provider.dart';
 import 'package:bk_absen/model/user_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HeaderSection extends ConsumerWidget {
   final UserModel? user;
+  final VoidCallback? onRefresh;
+  final bool isRefreshing;
 
-  const HeaderSection({super.key, this.user});
+  const HeaderSection({
+    super.key,
+    this.user,
+    this.onRefresh,
+    this.isRefreshing = false,
+  });
 
   String _shortenName(String? name, double maxWidth) {
     if (name == null || name.trim().isEmpty) {
@@ -21,33 +26,30 @@ class HeaderSection extends ConsumerWidget {
       return name.trim();
     }
 
-    final textStyle = const TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    );
-
     final fullName = parts.join(' ');
 
     final painter = TextPainter(
-      text: TextSpan(text: fullName, style: textStyle),
+      text: TextSpan(
+        text: fullName,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
       maxLines: 1,
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: maxWidth);
-
-    // Kalau nama masih muat, tampilkan nama lengkap.
     if (!painter.didExceedMaxLines) {
       return fullName;
     }
 
-    // Minimal tampilkan dua nama pertama.
     final result = <String>[parts[0], parts[1]];
 
-    // Nama berikutnya disingkat menjadi inisial.
     for (int i = 2; i < parts.length; i++) {
       final candidate = [...result, '${parts[i][0].toUpperCase()}.'].join(' ');
 
       final candidatePainter = TextPainter(
-        text: TextSpan(text: candidate, style: textStyle),
+        text: TextSpan(
+          text: candidate,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         maxLines: 1,
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: maxWidth);
@@ -67,9 +69,8 @@ class HeaderSection extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // PROFILE + USER INFO
           Expanded(
             child: Row(
               children: [
@@ -81,7 +82,6 @@ class HeaderSection extends ConsumerWidget {
                         : "assets/images/profile_P.png",
                   ),
                 ),
-
                 const SizedBox(width: 10),
 
                 Expanded(
@@ -94,7 +94,6 @@ class HeaderSection extends ConsumerWidget {
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             displayName,
@@ -105,11 +104,8 @@ class HeaderSection extends ConsumerWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
-                          const SizedBox(height: 2),
-
                           Text(
-                            user?.department ?? '-',
+                            user?.department ?? "-",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12),
@@ -125,11 +121,8 @@ class HeaderSection extends ConsumerWidget {
 
           const SizedBox(width: 10),
 
-          // LOGOUT
           InkWell(
-            onTap: () async {
-              await ref.read(authProvider.notifier).logout();
-            },
+            onTap: isRefreshing ? null : onRefresh,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               width: 42,
@@ -138,7 +131,16 @@ class HeaderSection extends ConsumerWidget {
                 border: Border.all(color: AppColors.muted),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(LucideIcons.logOut, size: 18),
+              child: isRefreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Padding(
+                        padding: EdgeInsets.all(11),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : const Icon(Icons.refresh, size: 20),
             ),
           ),
         ],

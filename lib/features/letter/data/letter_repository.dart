@@ -17,10 +17,13 @@ class LetterRepository {
     }
   }
 
-  Future<void> markAsRead(int letterId) async {
+  Future<String?> markAsRead(int letterId) async {
     try {
-      await DioClient.dio.post('/letters/$letterId/read');
+      final response = await DioClient.dio.post('/letters/$letterId/read');
+
+      return response.data['pdf_url'] as String?;
     } on DioException catch (e) {
+
       throw Exception(
         e.response?.data['message'] ?? 'Gagal menandai surat sebagai dibaca',
       );

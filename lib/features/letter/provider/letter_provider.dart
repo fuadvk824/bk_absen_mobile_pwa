@@ -45,21 +45,28 @@ class LetterNotifier extends StateNotifier<LetterState> {
     }
   }
 
-  Future<void> markAsRead(int letterId) async {
+  Future<String?> markAsRead(int letterId) async {
     try {
-      await repo.markAsRead(letterId);
+      final pdfUrl = await repo.markAsRead(letterId);
 
       state = state.copyWith(
         data: state.data.map((letter) {
           if (letter.id == letterId) {
-            return letter.copyWith(isRead: true);
+            return letter.copyWith(
+              isRead: true,
+              readAt: DateTime.now().toIso8601String(),
+              pdfUrl: pdfUrl ?? letter.pdfUrl,
+            );
           }
 
           return letter;
         }).toList(),
       );
+
+      return pdfUrl;
     } catch (e) {
-      // debugPrint('MARK LETTER READ ERROR: $e');
+      // debugPrint('Gagal menandai surat sebagai dibaca: $e');
+      return null;
     }
   }
 }

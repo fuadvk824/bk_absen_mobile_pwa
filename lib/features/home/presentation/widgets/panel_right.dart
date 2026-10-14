@@ -59,6 +59,7 @@ class PanelRight extends StatelessWidget {
             title: "Status",
             value: locationStatus,
           ),
+          
           const Spacer(),
           SizedBox(
             height: 48,
@@ -78,11 +79,6 @@ class PanelRight extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      // isCheckedIn ? "Check Out" : "Check In",
-                      // style: const TextStyle(
-                      //   fontWeight: FontWeight.bold,
-                      //   color: Colors.white,
-                      // ),
                       isDone
                           ? "Sudah Absen"
                           : isCheckedIn
@@ -111,7 +107,7 @@ Widget _infoRow({
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Icon(icon, size: 20),
-      const SizedBox(width: 10),
+      const SizedBox(width: 10), 
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

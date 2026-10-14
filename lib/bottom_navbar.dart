@@ -59,7 +59,6 @@ class _BottomNavbarState extends ConsumerState<BottomNavbar> {
       _currentIndex = index;
     });
 
-    // Animasi slide saat tap navbar
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 400),

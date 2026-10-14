@@ -33,7 +33,6 @@ class UserModel {
 
     // this.officeName,
     // this.officeAddress,
-
     this.officeLatitude,
     this.officeLongitude,
     this.officeRadius,
@@ -57,11 +56,13 @@ class UserModel {
       position: json['position'],
       checkInTime: json['checkin_time'],
       checkOutTime: json['checkout_time'],
-      toleransiLate: json['toleransi_late'],
+      // toleransiLate: json['toleransi_late'],
+      toleransiLate: json['toleransi_late'] is int
+          ? json['toleransi_late']
+          : int.tryParse(json['toleransi_late']?.toString() ?? ''),
 
       // officeName: json['office_name'],
       // officeAddress: json['office_address'],
-
       officeLatitude: (json['office_latitude'] as num?)?.toDouble(),
       officeLongitude: (json['office_longitude'] as num?)?.toDouble(),
       officeRadius: (json['office_radius'] as num?)?.toDouble(),
@@ -85,7 +86,6 @@ class UserModel {
 
       // 'office_name': officeName,
       // 'office_address': officeAddress,
-
       'office_latitude': officeLatitude,
       'office_longitude': officeLongitude,
       'office_radius': officeRadius,

@@ -11,6 +11,8 @@ import 'package:bk_absen/features/home/provider/attendance_provider.dart';
 import 'package:bk_absen/model/check_in_out_model.dart';
 import 'package:bk_absen/utils/app_colors.dart';
 import 'package:bk_absen/utils/custom_dialog.dart';
+import 'package:bk_absen/utils/toast_helper.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -201,7 +203,6 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
     }
   }
 
-
   bool canSubmit(CheckInOutModel? data) {
     if (data?.isOff == true) {
       return false;
@@ -252,12 +253,23 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
         if (!mounted) return;
 
         Navigator.pop(context, true);
+      } on DioException catch (e) {
+        if (!mounted) return;
+
+        ToastHelper.errorFromDio(context, e);
+      } on Exception catch (e) {
+        if (!mounted) return;
+
+        final message = e.toString().replaceFirst('Exception: ', '');
+
+        ToastHelper.error(context, message: message);
       } catch (e) {
         if (!mounted) return;
 
-        ScaffoldMessenger.of(
+        ToastHelper.error(
           context,
-        ).showSnackBar(SnackBar(content: Text("Gagal: $e")));
+          message: 'Terjadi kesalahan. Silakan coba lagi.',
+        );
       } finally {
         if (mounted) {
           setState(() {
@@ -268,7 +280,7 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
 
       return;
     }
- 
+
     if (!mounted) return;
 
     setState(() {
@@ -277,7 +289,6 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
 
     try {
       if (isCheckedIn) {
-
         if (notifier.isBeforeCheckoutTime()) {
           final reason = await showDialog<String>(
             context: context,
@@ -303,9 +314,7 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
             locationStatus: _locationStatus,
             earlyReason: reason,
           );
-        }
-        
-        else {
+        } else {
           await notifier.checkOut(
             employeeId: employeeId,
             imageBytes: _imageBytes!,
@@ -315,9 +324,7 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
             locationStatus: _locationStatus,
           );
         }
-      }
-      
-      else {
+      } else {
         await notifier.checkIn(
           employeeId: employeeId,
           imageBytes: _imageBytes!,
@@ -331,12 +338,17 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
       if (!mounted) return;
 
       Navigator.pop(context, true);
+    } on DioException catch (e) {
+      if (!mounted) return;
+
+      ToastHelper.errorFromDio(context, e);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
+      ToastHelper.error(
         context,
-      ).showSnackBar(SnackBar(content: Text("Gagal: $e")));
+        message: 'Terjadi kesalahan. Silakan coba lagi.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -404,7 +416,6 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
               absorbing: _isSubmitLoading,
               child: Stack(
                 children: [
-                 
                   Positioned.fill(
                     child: FlutterMap(
                       mapController: _mapController,
@@ -445,7 +456,6 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
                     ),
                   ),
 
-                 
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 20,
                     left: 0,
@@ -483,7 +493,6 @@ class _CheckInOutScreenState extends ConsumerState<CheckInOutScreen> {
                           : const Icon(Icons.my_location, color: Colors.white),
                     ),
                   ),
-
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
