@@ -11,6 +11,7 @@ class OffdayResponse {
 
   final String periodStart;
   final String periodEnd;
+  final bool canSubmit;
 
   OffdayResponse({
     required this.data,
@@ -18,6 +19,7 @@ class OffdayResponse {
     required this.colleaguePendingRequests,
     required this.periodStart,
     required this.periodEnd,
+    required this.canSubmit,
   });
 }
 
@@ -67,6 +69,7 @@ class OffdayRepository {
         colleaguePendingRequests: colleaguePendingRequests,
         periodStart: responseData['period_start']?.toString() ?? '',
         periodEnd: responseData['period_end']?.toString() ?? '',
+        canSubmit: responseData['can_submit'] == true,
       );
     } on DioException catch (e) {
       throw Exception(

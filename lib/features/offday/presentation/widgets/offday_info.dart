@@ -29,6 +29,7 @@ class _OffdayInfoState extends State<OffdayInfo> {
       builder: (overlayContext) {
         return Stack(
           children: [
+            // Tutup informasi ketika area di luar diketuk.
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
@@ -36,14 +37,13 @@ class _OffdayInfoState extends State<OffdayInfo> {
               ),
             ),
 
+            // Kotak informasi tepat di bawah ikon.
             Positioned(
               top: position.dy + size.height + 8,
               right: 12,
               child: Material(
                 color: Colors.transparent,
-                child: _OffdayInfoTooltip(
-                  onClose: _hideInfo,
-                ),
+                child: _OffdayInfoTooltip(onClose: _hideInfo),
               ),
             ),
           ],
@@ -74,11 +74,7 @@ class _OffdayInfoState extends State<OffdayInfo> {
         borderRadius: BorderRadius.circular(20),
         child: const Padding(
           padding: EdgeInsets.all(4),
-          child: Icon(
-            LucideIcons.info,
-            size: 18,
-            color: Colors.white,
-          ),
+          child: Icon(LucideIcons.info, size: 18, color: Colors.white),
         ),
       ),
     );
@@ -88,9 +84,7 @@ class _OffdayInfoState extends State<OffdayInfo> {
 class _OffdayInfoTooltip extends StatelessWidget {
   final VoidCallback onClose;
 
-  const _OffdayInfoTooltip({
-    required this.onClose,
-  });
+  const _OffdayInfoTooltip({required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +94,7 @@ class _OffdayInfoTooltip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.12),
@@ -131,10 +123,7 @@ class _OffdayInfoTooltip extends StatelessWidget {
                     SizedBox(height: 3),
                     Text(
                       'Pengajuan hari libur awal periode',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -149,11 +138,7 @@ class _OffdayInfoTooltip extends StatelessWidget {
                     color: Colors.grey.shade100,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    size: 16,
-                    color: Colors.grey,
-                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.grey),
                 ),
               ),
             ],
@@ -184,9 +169,8 @@ class _OffdayInfoTooltip extends StatelessWidget {
             icon: Icons.notes_outlined,
             title: 'Aturan pengajuan',
             description:
-                'Tidak boleh memilih hari libur sama dengan rekan kerja, diskusikan pemilihan hari libur'
+                'Tidak boleh memilih hari libur sama dengan rekan kerja, diskusikan pemilihan hari libur dengan sesama rekan',
           ),
-          
         ],
       ),
     );
@@ -216,11 +200,7 @@ class _InfoItem extends StatelessWidget {
             color: Colors.blue.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(9),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: Colors.blue.shade700,
-          ),
+          child: Icon(icon, size: 18, color: Colors.blue.shade700),
         ),
         const SizedBox(width: 10),
         Expanded(

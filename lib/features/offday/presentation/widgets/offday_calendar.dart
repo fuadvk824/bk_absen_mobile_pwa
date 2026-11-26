@@ -121,6 +121,17 @@ class OffdayCalendar extends StatelessWidget {
       return;
     }
 
+    // Pengajuan baru hanya bisa dilakukan tanggal 21-24.
+    if (!state.canSubmit) {
+      ToastHelper.info(
+        context,
+        message:
+            'Pengajuan perubahan jadwal libur hanya dibuka tanggal 21-24 setiap bulan.',
+      );
+
+      return;
+    }
+    // Cek batas maksimal 6 hari libur.
     if (!notifier.canSelectOffday(day)) {
       ToastHelper.warning(
         context,
@@ -148,6 +159,11 @@ class OffdayCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final periodStart = DateTime.parse(state.periodStart);
+    final periodEnd = DateTime.parse(state.periodEnd);
+
+    
+
     return Container(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
       decoration: BoxDecoration(
@@ -163,8 +179,8 @@ class OffdayCalendar extends StatelessWidget {
       ),
       child: TableCalendar(
         locale: 'id_ID',
-        firstDay: DateTime(state.selectedYear, 1, 1),
-        lastDay: DateTime(state.selectedYear, 12, 31),
+        firstDay: DateTime(periodStart.year, periodStart.month, 1),
+        lastDay: DateTime(periodEnd.year, periodEnd.month + 1, 0),
         focusedDay: focusedDay,
         selectedDayPredicate: (day) {
           return selectedDay != null && isSameDay(selectedDay, day);

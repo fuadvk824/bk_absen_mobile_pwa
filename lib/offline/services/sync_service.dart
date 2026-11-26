@@ -28,25 +28,20 @@ class SyncService {
       pending.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
       for (final item in pending) {
-        if (item.imageBytes.isEmpty) {
-          continue;
-        }
-
-        if (item.lateProofBytes != null && item.lateProofBytes!.isEmpty) {
-          continue;
-        }
-
         try {
           if (item.type == 'checkin') {
             await attendanceRepo.checkIn(
               employeeId: item.employeeId,
-              imageBytes: Uint8List.fromList(item.imageBytes),
+              imageBytes: item.imageBytes == null || item.imageBytes!.isEmpty
+                  ? null
+                  : Uint8List.fromList(item.imageBytes!),
               lat: item.latitude,
               lng: item.longitude,
               distance: item.distance,
               locationStatus: item.locationStatus,
               lateReason: item.lateReason,
-              lateProofBytes: item.lateProofBytes == null
+              lateProofBytes:
+                  item.lateProofBytes == null || item.lateProofBytes!.isEmpty
                   ? null
                   : Uint8List.fromList(item.lateProofBytes!),
               checkinAt: item.createdAt,
@@ -54,7 +49,9 @@ class SyncService {
           } else if (item.type == 'checkout') {
             await attendanceRepo.checkOut(
               employeeId: item.employeeId,
-              imageBytes: Uint8List.fromList(item.imageBytes),
+              imageBytes: item.imageBytes == null || item.imageBytes!.isEmpty
+                  ? null
+                  : Uint8List.fromList(item.imageBytes!),
               lat: item.latitude,
               lng: item.longitude,
               distance: item.distance,

@@ -10,28 +10,11 @@ class OffdayLegend extends StatelessWidget {
       spacing: 20,
       runSpacing: 8,
       children: const [
-        _LegendItem(
-          color: Colors.black,
-          text: 'Masuk',
-        ),
-        _LegendItem(
-          color: Colors.red,
-          text: 'Libur',
-        ),
-        _LegendItem(
-          color: Colors.blue,
-          text: 'Pending',
-        ),
-        _LegendItem(
-          color: Colors.red,
-          text: 'Libur rekan',
-          isBorder: true,
-        ),
-        _LegendItem(
-          color: Colors.orange,
-          text: 'Pending rekan',
-          isBorder: true,
-        ),
+        _LegendItem(color: Colors.black, text: 'Masuk'),
+        _LegendItem(color: Colors.red, text: 'Libur'),
+        _LegendItem(color: Colors.blue, text: 'Pending'),
+        _LegendItem(color: Colors.red, text: 'Libur rekan', isBorder: true),
+        _LegendItem(color: Colors.blue, text: 'Pending rekan', isBorder: true),
       ],
     );
   }
@@ -58,19 +41,11 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: isBorder ? Colors.transparent : color,
             shape: BoxShape.circle,
-            border: isBorder
-                ? Border.all(
-                    color: color,
-                    width: 2,
-                  )
-                : null,
+            border: isBorder ? Border.all(color: color, width: 2) : null,
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 12),
-        ),
+        Text(text, style: const TextStyle(fontSize: 12)),
       ],
     );
   }

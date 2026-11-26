@@ -4,6 +4,7 @@ class CheckInOutModel {
   final String? checkOut;
   final String? totalWaktu;
   final bool isOff;
+  final bool isLeave;
   final String? limitLate; //tambahan
   final bool hasShift;
 
@@ -13,6 +14,7 @@ class CheckInOutModel {
     this.checkOut,
     this.totalWaktu,
     required this.isOff,
+    this.isLeave = false,
     this.limitLate, //tambahan
     this.hasShift = false,
   });
@@ -24,8 +26,22 @@ class CheckInOutModel {
       checkOut: json['check_out'],
       totalWaktu: json['total_waktu'],
       isOff: json['is_off'] ?? false,
+      isLeave: json['is_leave'] ?? false,
       limitLate: json['limit_late'], //tambahan
       hasShift: json['has_shift'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tanggal': tanggal,
+      'check_in': checkIn,
+      'check_out': checkOut,
+      'total_waktu': totalWaktu,
+      'is_off': isOff,
+      'is_leave': isLeave,
+      'limit_late': limitLate,
+      'has_shift': hasShift,
+    };
   }
 }

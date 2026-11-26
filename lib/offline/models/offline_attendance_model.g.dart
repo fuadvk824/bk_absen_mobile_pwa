@@ -20,7 +20,7 @@ class OfflineAttendanceModelAdapter
     return OfflineAttendanceModel(
       type: fields[0] as String,
       employeeId: (fields[1] as num).toInt(),
-      imageBytes: (fields[2] as List).cast<int>(),
+      imageBytes: (fields[2] as List?)?.cast<int>(),
       latitude: (fields[3] as num).toDouble(),
       longitude: (fields[4] as num).toDouble(),
       distance: (fields[5] as num).toDouble(),

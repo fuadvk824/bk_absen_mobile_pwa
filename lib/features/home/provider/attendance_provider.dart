@@ -59,8 +59,9 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
     if (current != null &&
         _attendanceDate(current) == _todayString() &&
-        current.checkIn != null &&
-        current.checkIn!.isNotEmpty) {
+        (current.isLeave ||
+            current.isOff ||
+            (current.checkIn != null && current.checkIn!.isNotEmpty))) {
       return current;
     }
 
@@ -70,10 +71,13 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     final cacheMap = Map<String, dynamic>.from(cache);
     final cacheDate = cacheMap['tanggal']?.toString().split(' ').first;
     final cacheCheckIn = cacheMap['check_in']?.toString();
+    final cacheIsLeave = cacheMap['is_leave'] == true;
+    final cacheIsOff = cacheMap['is_off'] == true;
 
     if (cacheDate != _todayString() ||
-        cacheCheckIn == null ||
-        cacheCheckIn.isEmpty) {
+        (!cacheIsLeave &&
+            !cacheIsOff &&
+            (cacheCheckIn == null || cacheCheckIn.isEmpty))) {
       return null;
     }
 
@@ -91,14 +95,17 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     if (_attendanceDate(serverAttendance) != today) {
       if (localAttendance != null &&
           _attendanceDate(localAttendance) == today &&
-          localAttendance.checkIn != null &&
-          localAttendance.checkIn!.isNotEmpty) {
+          (localAttendance.isLeave ||
+              localAttendance.isOff ||
+              (localAttendance.checkIn != null &&
+                  localAttendance.checkIn!.isNotEmpty))) {
         return CheckInOutModel(
           tanggal: today,
           checkIn: localAttendance.checkIn,
           checkOut: localAttendance.checkOut,
           totalWaktu: localAttendance.totalWaktu,
           isOff: localAttendance.isOff,
+          isLeave: localAttendance.isLeave,
           hasShift: localAttendance.hasShift,
           limitLate: localAttendance.limitLate,
         );
@@ -110,9 +117,14 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
         checkOut: null,
         totalWaktu: null,
         isOff: serverAttendance.isOff,
+        isLeave: serverAttendance.isLeave,
         hasShift: serverAttendance.hasShift,
         limitLate: serverAttendance.limitLate,
       );
+    }
+    // Status cuti/libur dari server harus mengalahkan check-in lokal.
+    if (serverAttendance.isLeave || serverAttendance.isOff) {
+      return serverAttendance;
     }
 
     // Server adalah data hari ini dan sudah punya check-in.
@@ -133,6 +145,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
         checkOut: serverAttendance.checkOut ?? localAttendance.checkOut,
         totalWaktu: serverAttendance.totalWaktu ?? localAttendance.totalWaktu,
         isOff: serverAttendance.isOff,
+        isLeave: serverAttendance.isLeave,
         hasShift: serverAttendance.hasShift,
         limitLate: serverAttendance.limitLate,
       );
@@ -161,6 +174,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
           'check_out': finalAttendance.checkOut,
           'total_waktu': finalAttendance.totalWaktu,
           'is_off': finalAttendance.isOff,
+          'is_leave': finalAttendance.isLeave,
           'has_shift': finalAttendance.hasShift,
           'limit_late': finalAttendance.limitLate,
         });
@@ -268,6 +282,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       checkOut: checkoutTime,
       totalWaktu: current?.totalWaktu,
       isOff: current?.isOff ?? false,
+      isLeave: current?.isLeave ?? false,
       hasShift: current?.hasShift ?? true,
       limitLate: current?.limitLate,
     );
@@ -278,6 +293,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       "check_out": attendance.checkOut,
       "total_waktu": attendance.totalWaktu,
       "is_off": attendance.isOff,
+      "is_leave": attendance.isLeave,
       "has_shift": attendance.hasShift,
       "limit_late": attendance.limitLate,
     });
@@ -306,6 +322,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       checkOut: null,
       totalWaktu: null,
       isOff: false,
+      isLeave: false,
       hasShift: true,
       limitLate: state.attendance?.limitLate,
     );
@@ -316,6 +333,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
       "check_out": attendance.checkOut,
       "total_waktu": attendance.totalWaktu,
       "is_off": attendance.isOff,
+      "is_leave": attendance.isLeave,
       "has_shift": attendance.hasShift,
       "limit_late": attendance.limitLate,
     });
@@ -325,7 +343,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
   Future<void> checkIn({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -374,7 +392,7 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
   Future<void> checkOut({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -450,6 +468,10 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
     final user = state.user;
     final data = state.attendance;
 
+    if (data?.isLeave == true) {
+      return "Hari ini cuti";
+    }
+
     if (data?.isOff == true) {
       return "Hari ini libur";
     }
@@ -490,6 +512,9 @@ class AttendanceNotifier extends StateNotifier<AttendanceState> {
 
     if (attendanceDate != today) {
       return "Check In";
+    }
+    if (data.isLeave) {
+      return "Cuti";
     }
 
     if (data.isOff == true) {

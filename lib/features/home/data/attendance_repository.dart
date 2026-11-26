@@ -13,7 +13,7 @@ class AttendanceRepository {
 
   Future<void> saveOfflineCheckIn({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -25,7 +25,7 @@ class AttendanceRepository {
     final data = OfflineAttendanceModel(
       type: "checkin",
       employeeId: employeeId,
-      imageBytes: imageBytes.toList(),
+      imageBytes: imageBytes?.toList(),
       latitude: lat,
       longitude: lng,
       distance: distance,
@@ -40,7 +40,7 @@ class AttendanceRepository {
 
   Future<void> saveOfflineCheckOut({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -51,7 +51,7 @@ class AttendanceRepository {
     final data = OfflineAttendanceModel(
       type: "checkout",
       employeeId: employeeId,
-      imageBytes: imageBytes.toList(),
+      imageBytes: imageBytes?.toList(),
       latitude: lat,
       longitude: lng,
       distance: distance,
@@ -82,7 +82,7 @@ class AttendanceRepository {
       return UserModel.fromJson(Map<String, dynamic>.from(cache));
     }
   }
- 
+
   Future<CheckInOutModel?> getToday() async {
     final now = DateTime.now();
 
@@ -105,6 +105,7 @@ class AttendanceRepository {
           "check_out": attendance.checkOut,
           "total_waktu": attendance.totalWaktu,
           "is_off": attendance.isOff,
+          "is_leave": attendance.isLeave,
           "has_shift": attendance.hasShift,
           "limit_late": attendance.limitLate,
         });
@@ -120,6 +121,7 @@ class AttendanceRepository {
         checkOut: null,
         totalWaktu: null,
         isOff: attendance.isOff,
+        isLeave: attendance.isLeave,
         hasShift: attendance.hasShift,
         limitLate: attendance.limitLate,
       );
@@ -142,6 +144,7 @@ class AttendanceRepository {
           checkOut: null,
           totalWaktu: null,
           isOff: false,
+          isLeave: false,
           hasShift: cacheMap['has_shift'] ?? true,
           limitLate: null,
         );
@@ -153,7 +156,7 @@ class AttendanceRepository {
 
   Future<void> checkIn({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -168,11 +171,14 @@ class AttendanceRepository {
       "longitude_checkin": lng,
       "distance_checkin": distance,
       "location_status": locationStatus,
-      "gambar_checkin": MultipartFile.fromBytes(
+    };
+
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      formDataMap["gambar_checkin"] = MultipartFile.fromBytes(
         imageBytes,
         filename: "checkin.jpg",
-      ),
-    };
+      );
+    }
 
     if (checkinAt != null) {
       formDataMap["checkin_at"] = checkinAt.toIso8601String();
@@ -200,7 +206,7 @@ class AttendanceRepository {
 
   Future<void> checkOut({
     required int employeeId,
-    required Uint8List imageBytes,
+    Uint8List? imageBytes,
     required double lat,
     required double lng,
     required double distance,
@@ -214,11 +220,14 @@ class AttendanceRepository {
       "longitude_checkout": lng,
       "distance_checkout": distance,
       "location_status": locationStatus,
-      "gambar_checkout": MultipartFile.fromBytes(
+    };
+
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      formDataMap["gambar_checkout"] = MultipartFile.fromBytes(
         imageBytes,
         filename: "checkout.jpg",
-      ),
-    };
+      );
+    }
 
     if (checkoutAt != null) {
       formDataMap["checkout_at"] = checkoutAt.toIso8601String();

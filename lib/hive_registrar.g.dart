@@ -4,15 +4,18 @@
 
 import 'package:hive_ce/hive_ce.dart';
 import 'package:bk_absen/offline/models/offline_attendance_model.dart';
+import 'package:bk_absen/offline/models/offline_sync_failure_model.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(OfflineAttendanceModelAdapter());
+    registerAdapter(OfflineSyncFailureModelAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(OfflineAttendanceModelAdapter());
+    registerAdapter(OfflineSyncFailureModelAdapter());
   }
 }

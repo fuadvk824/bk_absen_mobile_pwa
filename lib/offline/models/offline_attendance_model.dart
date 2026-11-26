@@ -12,7 +12,7 @@ class OfflineAttendanceModel extends HiveObject {
 
   /// gambar checkin / checkout
   @HiveField(2)
-  List<int> imageBytes;
+  List<int>? imageBytes;
 
   @HiveField(3)
   double latitude;
@@ -51,7 +51,7 @@ class OfflineAttendanceModel extends HiveObject {
   OfflineAttendanceModel({
     required this.type,
     required this.employeeId,
-    required this.imageBytes,
+    this.imageBytes,
     required this.latitude,
     required this.longitude,
     required this.distance,
